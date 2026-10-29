@@ -1261,10 +1261,11 @@
         [await ck('sw.js'), 'sw.js is uploaded'],
         [await ck('icons/icon-192.png'), 'icons/icon-192.png is uploaded'],
         [await ck('icons/icon-512.png'), 'icons/icon-512.png is uploaded'],
-        [!!reg, 'Service worker is registered']
+        [!!reg, 'Service worker is registered'],
+        [!!deferredInstallPrompt, 'Browser reports the app as installable (needed for a real app, not a shortcut)']
       ];
       return '<ul class="help-steps" style="list-style:none;padding:0;margin-top:14px;">' + rows.map(r => `<li>${r[0] ? '✅' : '❌'} ${r[1]}</li>`).join('') + '</ul>' +
-        (rows.some(r => !r[0]) ? '<p style="font-size:13px;margin-top:8px;">Fix every ❌ (upload missing files next to <b>index.html</b> in your GitHub repository), then reload this page twice.</p>' : '<p style="font-size:13px;margin-top:8px;">Everything looks fine. Reload once, then use the browser menu ⋮ → <b>Install app</b>.</p>');
+        (rows.some(r => !r[0]) ? '<p style="font-size:13px;margin-top:8px;">Fix every ❌ (upload missing files next to <b>index.html</b> in your GitHub repository), then reload this page twice. Until all are ✅ the phone only creates a browser <b>shortcut</b>, not a real app.</p>' : '<p style="font-size:13px;margin-top:8px;">Everything looks fine. Reload once, then use the browser menu ⋮ → <b>Install app</b>.</p>');
     }
 
     function initInstall() {
