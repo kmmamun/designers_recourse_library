@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Designer Resource Hub</title>
+  <meta name="description" content="Designer Resource Hub – your personal library of design resources">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#329CFF">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Designer Hub">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Zilla+Slab:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ================= THEME: 3 BRAND COLORS (Yellow · Green · Blue) + DARK ================= */
+    :root {
+      --yellow: #FFCA36;
+      --green:  #11CBA4;
+      --blue:   #329CFF;
+
+      --yellow-soft: #FFF4D2;
+      --green-soft:  #DFF7F1;
+      --blue-soft:   #DCEEFF;
+
+      --yellow-ink: #8A6100;
+      --green-ink:  #07715C;
+      --blue-ink:   #1269C4;
+
+      --bg: #FBFAF6;
+      --sidebar: #F8F0DC;
+      --card: #FFFFFF;
+      --panel: var(--green-soft);
+      --ink: #1E2A32;
+      --muted: #67737C;
+      --line: #E9E4D8;
+      --shadow: 0 6px 20px rgba(60, 50, 20, .07);
+      --shadow-lg: 0 14px 34px rgba(60, 50, 20, .14);
+      --danger: #E5484D;
+      --radius: 20px;
+      color-scheme: light;
+    }
+    [data-theme="dark"] {
+      --yellow-soft: #3A3011;
+      --green-soft:  #0F3A33;
+      --blue-soft:   #12304D;
+
+      --yellow-ink: #FFD968;
+      --green-ink:  #5CE3C6;
+      --blue-ink:   #86C3FF;
+
+      --bg: #0E1317;
+      --sidebar: #141B21;
+      --card: #1B252C;
+      --panel: #12262A;
+      --ink: #EDF2F5;
+      --muted: #96A4AE;
+      --line: #28343D;
+      --shadow: 0 6px 20px rgba(0, 0, 0, .35);
+      --shadow-lg: 0 14px 34px rgba(0, 0, 0, .5);
+      color-scheme: dark;
+    }
+
+    /* card tints cycle through the 3 brand colors */
+    .tint-0 { --t-main: var(--yellow); --t-soft: var(--yellow-soft); --t-ink: var(--yellow-ink); }
+    .tint-1 { --t-main: var(--green);  --t-soft: var(--green-soft);  --t-ink: var(--green-ink); }
+    .tint-2 { --t-main: var(--blue);   --t-soft: var(--blue-soft);   --t-ink: var(--blue-ink); }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', 'Hind Siliguri', system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--ink); min-height: 100vh; overflow-x: hidden;
+      transition: background .3s, color .3s;
+    }
+    h1, h2, h3, .serif { font-family: 'Zilla Slab', 'Hind Siliguri', Georgia, serif; }
+    button { font-family: inherit; cursor: pointer; color: inherit; }
+    :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+    .app { display: flex; min-height: 100vh; }
+
+    /* ================= SIDEBAR ================= */
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(10, 15, 20, .5); z-index: 99; backdrop-filter: blur(2px); }
+    .sidebar-overlay.show { display: block; }
+
+    .sidebar {
+      width: 272px; flex-shrink: 0; background: var(--sidebar);
+      position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column;
+      padding: 26px 16px 16px; z-index: 100; transition: transform .3s, background .3s;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-family: 'Zilla Slab', serif; font-weight: 700; font-size: 22px; padding: 0 8px; }
+    .logo-mark { width: 36px; height: 36px; flex-shrink: 0; object-fit: contain; }
+
+    .profile { text-align: center; margin: 26px 0 22px; }
+    .avatar-ring {
+      width: 86px; height: 86px; border-radius: 50%; margin: 0 auto 12px; padding: 4px;
+      background: conic-gradient(var(--yellow), var(--green), var(--blue), var(--yellow));
+    }
+    .avatar-ring span {
+      width: 100%; height: 100%; border-radius: 50%; background: var(--card);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Zilla Slab', serif; font-weight: 700; font-size: 32px; color: var(--blue-ink);
+    }
+    .profile .name { font-family: 'Zilla Slab', serif; font-weight: 700; font-size: 20px; }
+    .profile .role { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    .side-scroll { flex: 1; overflow-y: auto; min-height: 0; padding-right: 2px; }
+    .side-scroll::-webkit-scrollbar { width: 4px; }
+    .side-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+    .nav-list { display: flex; flex-direction: column; gap: 4px; }
+    .nav-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 11px 14px; border-radius: 14px; border: none; background: transparent; width: 100%;
+      font-size: 14px; font-weight: 500; color: var(--muted); text-align: left; transition: .2s; min-height: 44px;
+    }
+    .nav-item .nav-content { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .nav-item .nav-content > span.txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nav-item:hover { background: rgba(0, 0, 0, .04); color: var(--ink); }
+    [data-theme="dark"] .nav-item:hover { background: rgba(255, 255, 255, .05); }
+    .nav-item.active { background: var(--card); color: var(--ink); font-weight: 700; box-shadow: var(--shadow); }
+    .nav-badge { background: var(--line); color: var(--muted); padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .nav-item.active .nav-badge { background: var(--blue); color: #fff; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    .nav-label { font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--muted); letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; margin: 22px 6px 8px 14px; }
+    .cat-item[draggable="true"] { cursor: grab; }
+    .cat-item.dragging { opacity: .5; transform: scale(.98); }
+    .cat-item.drag-over { box-shadow: 0 -2px 0 0 var(--blue); }
+
+    .side-footer { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 10px; display: flex; flex-direction: column; gap: 2px; }
+    .side-footer .nav-item { min-height: 40px; padding: 8px 14px; }
+
+    /* ================= MAIN ================= */
+    .main { flex: 1; min-width: 0; padding: 34px 40px 48px; max-width: 1240px; margin: 0 auto; width: 100%; }
+
+    .top-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 26px; }
+    .title-wrap .page-title { font-size: 44px; line-height: 1.05; font-weight: 700; letter-spacing: -.5px; }
+    .title-wrap .greeting { font-size: 14px; color: var(--muted); margin-top: 6px; }
+    .mobile-brand { display: none; }
+
+    .header-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .search-pill {
+      display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line);
+      border-radius: 999px; padding: 0 16px; height: 44px; width: 280px; transition: .2s; box-shadow: var(--shadow);
+    }
+    .search-pill:focus-within { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(50, 156, 255, .18); }
+    .search-pill input { border: none; background: transparent; outline: none; width: 100%; font-size: 16px; font-family: inherit; color: var(--ink); }
+    .search-pill input::placeholder { color: var(--muted); }
+    .icon-btn {
+      width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--card);
+      display: inline-flex; align-items: center; justify-content: center; font-size: 17px; transition: .2s; flex-shrink: 0; box-shadow: var(--shadow);
+    }
+    .icon-btn:hover { transform: translateY(-2px); border-color: var(--blue); }
+    .icon-btn.spin { animation: spin 1s linear infinite; }
+
+    /* chips (mobile quick categories) */
+    .chips { display: none; gap: 8px; overflow-x: auto; padding: 2px 0 16px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip-btn { flex: 0 0 auto; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 9px 16px; font-size: 13px; font-weight: 600; min-height: 40px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+    .chip-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+    /* install banner */
+    .install-banner { display: none; align-items: center; gap: 12px; background: var(--blue-soft); border: 1px solid var(--blue); border-radius: 16px; padding: 12px 14px; margin-bottom: 18px; }
+    .install-banner.show { display: flex; }
+    .install-banner .ib-text { flex: 1; font-size: 13px; line-height: 1.4; }
+    .install-banner .ib-text b { display: block; font-size: 14px; }
+    .install-banner .x { background: transparent; border: none; font-size: 20px; color: var(--muted); width: 32px; height: 32px; }
+
+    /* ================= DASHBOARD ================= */
+    .dash { display: grid; grid-template-columns: 1.25fr 1fr; gap: 32px; align-items: stretch; margin-bottom: 34px; }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px 28px; align-content: center; }
+    .stat { border-bottom: 2px solid var(--line); padding-bottom: 10px; }
+    .stat .label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .stat .label i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+    .stat .num { font-family: 'Zilla Slab', serif; font-weight: 700; font-size: 36px; line-height: 1.1; }
+
+    .promo { position: relative; overflow: hidden; background: var(--yellow-soft); border-radius: 26px; padding: 26px; min-height: 176px; box-shadow: var(--shadow); display: flex; flex-direction: column; justify-content: center; }
+    .promo h3 { font-size: 24px; line-height: 1.2; max-width: 55%; position: relative; z-index: 2; }
+    .promo h3 em { font-style: normal; color: var(--blue-ink); }
+    .promo p { font-size: 13px; color: var(--muted); margin-top: 6px; position: relative; z-index: 2; max-width: 55%; }
+    .cta-wrap { position: absolute; right: 52px; top: 50%; transform: translateY(-50%); width: 70px; height: 70px; z-index: 2; }
+    .cta-wrap svg.arcs { position: absolute; left: 50%; top: 50%; width: 200px; height: 200px; transform: translate(-50%, -50%); z-index: 0; }
+    .promo .promo-actions { display: flex; gap: 10px; margin-top: 16px; position: relative; z-index: 2; align-items: center; }
+    .round-cta { width: 100%; height: 100%; border-radius: 50%; border: none; background: var(--blue); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: 1px; box-shadow: 0 10px 22px rgba(50, 156, 255, .45); transition: .2s; position: relative; z-index: 1; }
+    .round-cta:hover { transform: scale(1.07); }
+    .pill-btn { border: 1.5px solid var(--ink); background: transparent; border-radius: 999px; padding: 9px 16px; font-size: 13px; font-weight: 600; min-height: 40px; }
+    .pill-btn:hover { background: var(--ink); color: var(--bg); }
+
+    .home-extras { display: grid; grid-template-columns: 1.25fr 1fr; gap: 32px; margin-bottom: 34px; }
+    .section-title { font-size: 26px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .section-title small { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; color: var(--muted); }
+
+    .chart-wrap { position: relative; }
+    .chart-wrap svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .chart-wrap text { font-family: 'Inter', sans-serif; fill: var(--muted); font-size: 11px; }
+    .chart-tip { position: absolute; transform: translate(-50%, -135%); background: var(--card); box-shadow: var(--shadow-lg); border-radius: 12px; padding: 8px 14px; text-align: center; pointer-events: none; font-size: 12px; color: var(--muted); white-space: nowrap; border: 1px solid var(--line); }
+    .chart-tip b { display: block; font-family: 'Zilla Slab', serif; font-size: 18px; color: var(--ink); }
+    .empty-mini { color: var(--muted); font-size: 14px; padding: 30px 0; }
+
+    .recent-list { display: flex; flex-direction: column; gap: 14px; }
+    .recent-item { display: flex; align-items: center; gap: 12px; background: none; border: none; text-align: left; width: 100%; padding: 4px 0; min-height: 44px; }
+    .recent-item .mini-av { width: 40px; height: 40px; border-radius: 50%; background: var(--t-soft); color: var(--t-ink); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; overflow: hidden; position: relative; }
+    .mini-av img, .rc-ico img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #fff; }
+    .recent-item .r-name { font-weight: 600; font-size: 14px; }
+    .recent-item .r-sub { font-size: 12px; color: var(--muted); }
+    .recent-item .r-body { flex: 1; min-width: 0; }
+    .recent-item .r-body > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .recent-item .r-cat { font-size: 11px; font-weight: 700; background: var(--t-soft); color: var(--t-ink); padding: 4px 10px; border-radius: 999px; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .view-more { background: none; border: none; font-size: 13px; font-weight: 600; margin-top: 6px; padding: 8px 0; color: var(--ink); }
+
+    /* ================= RESOURCE LIBRARY PANEL ================= */
+    .panel { background: var(--panel); border-radius: 30px; padding: 26px; transition: background .3s; }
+    .panel .section-title { margin-bottom: 18px; }
+    .resources-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; min-height: 160px; }
+
+    .rcard { background: var(--card); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow); transition: transform .2s, box-shadow .2s; border: 1px solid transparent; }
+    .rcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--t-main); }
+    .rc-top { display: flex; align-items: center; gap: 12px; }
+    .rc-ico { width: 46px; height: 46px; border-radius: 50%; background: var(--t-soft); color: var(--t-ink); display: flex; align-items: center; justify-content: center; font-family: 'Zilla Slab', serif; font-weight: 700; font-size: 20px; flex-shrink: 0; position: relative; overflow: hidden; box-shadow: 0 0 0 3px var(--t-main) inset; }
+    .rc-ico img { inset: 3px; width: calc(100% - 6px); height: calc(100% - 6px); border-radius: 50%; }
+    .rc-head { flex: 1; min-width: 0; }
+    .rc-head h3 { font-size: 18px; line-height: 1.25; word-break: break-word; }
+    .rc-cat { display: inline-block; margin-top: 3px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--t-ink); }
+    .fav-btn { background: transparent; border: none; font-size: 24px; color: var(--line); width: 44px; height: 44px; border-radius: 50%; transition: .2s; flex-shrink: 0; }
+    .fav-btn:hover { transform: scale(1.12); }
+    .fav-btn.active { color: var(--yellow); text-shadow: 0 2px 8px rgba(255, 202, 54, .5); }
+    .rc-desc { font-size: 14px; line-height: 1.55; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 999px; background: var(--t-soft); color: var(--t-ink); }
+    .rc-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 4px; }
+    .rc-actions .mini-btns { display: flex; gap: 6px; }
+    .btn-visit { background: var(--blue); color: #fff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 0 20px; height: 44px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; transition: .2s; box-shadow: 0 6px 14px rgba(50, 156, 255, .35); }
+    .btn-visit:hover { filter: brightness(1.07); transform: translateY(-2px); }
+    .sq-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: transparent; font-size: 15px; transition: .2s; }
+    .sq-btn:hover { border-color: var(--blue); }
+    .sq-btn.del:hover { border-color: var(--danger); }
+
+    .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); font-size: 15px; grid-column: 1/-1; }
+    .empty-state h3 { color: var(--ink); font-size: 22px; margin-bottom: 6px; }
+    .loader-spinner { width: 38px; height: 38px; border: 4px solid var(--line); border-top-color: var(--blue); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 14px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ================= MODALS ================= */
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(10, 15, 20, .5); align-items: center; justify-content: center; z-index: 2000; padding: 16px; backdrop-filter: blur(3px); }
+    .overlay.show { display: flex; }
+    .modal { background: var(--card); border-radius: 26px; padding: 28px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: pop .22s ease-out; }
+    .modal h2 { font-size: 26px; margin-bottom: 20px; }
+    @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .form-grid { display: flex; flex-direction: column; gap: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 7px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 12px 16px; border: 1.5px solid var(--line); border-radius: 14px; font-size: 16px; font-family: inherit;
+      background: var(--bg); color: var(--ink); outline: none; transition: .2s; min-height: 48px;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--blue); background: var(--card); box-shadow: 0 0 0 4px rgba(50, 156, 255, .15); }
+    .form-group textarea { resize: vertical; min-height: 84px; }
+    input[type="checkbox"] { accent-color: var(--blue); width: 20px; height: 20px; cursor: pointer; }
+    .check-row { display: flex; align-items: center; gap: 10px; }
+    .check-row label { margin: 0; font-weight: 600; font-size: 14px; cursor: pointer; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+
+    .btn { background: var(--blue); color: #fff; border: none; padding: 0 24px; height: 48px; border-radius: 999px; font-size: 15px; font-weight: 600; transition: .2s; box-shadow: 0 8px 18px rgba(50, 156, 255, .35); }
+    .btn:hover { filter: brightness(1.07); transform: translateY(-1px); }
+    .btn:disabled { opacity: .6; transform: none; cursor: not-allowed; }
+    .btn.secondary { background: transparent; color: var(--ink); border: 1.5px solid var(--line); box-shadow: none; }
+    .btn.secondary:hover { background: var(--bg); }
+    .btn.green { background: var(--green); color: #05302a; box-shadow: 0 8px 18px rgba(17, 203, 164, .35); }
+
+    .bulk-modal { max-width: 1050px; }
+    .bulk-help { font-size: 13px; color: var(--muted); line-height: 1.7; background: var(--green-soft); border-radius: 14px; padding: 12px 14px; margin: -6px 0 18px; }
+    .bulk-column-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .bulk-textarea { min-height: 260px !important; resize: vertical !important; line-height: 1.55; white-space: pre; overflow-wrap: normal; font-family: Consolas, "Courier New", monospace !important; font-size: 14px !important; }
+    .bulk-count { font-size: 11px; color: var(--muted); margin-top: 5px; text-align: right; }
+    .bulk-preview { padding: 12px 14px; border-radius: 14px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .bulk-preview.ok { color: var(--green-ink); border-color: var(--green); background: var(--green-soft); }
+    .bulk-preview.error { color: #B42318; border-color: #F7B4B0; background: #FEF3F2; }
+    [data-theme="dark"] .bulk-preview.error { color: #FF9C95; background: #3A1715; border-color: #6B2A26; }
+    .required { color: var(--danger); }
+    .optional { color: var(--muted); font-weight: 400; }
+
+    .cat-manage-list { max-height: 280px; overflow-y: auto; border: 1px solid var(--line); border-radius: 16px; padding: 10px; background: var(--bg); display: flex; flex-direction: column; gap: 8px; }
+    .cat-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; background: var(--card); border-radius: 12px; border: 1px solid var(--line); }
+    .cat-row .nm { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .cat-row .ctl { display: flex; gap: 4px; flex-shrink: 0; }
+    .cat-row .ctl button { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: transparent; font-size: 13px; }
+    .cat-row .ctl button:disabled { opacity: .35; }
+    .add-cat-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .add-cat-row input { flex: 1 1 160px; }
+    .add-cat-row .pin { flex: 0 1 120px; }
+
+    .help-steps { padding-left: 20px; line-height: 1.8; font-size: 14px; color: var(--muted); }
+    .help-steps b { color: var(--ink); }
+
+    .toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); padding: 13px 22px; border-radius: 999px; font-size: 14px; font-weight: 500; opacity: 0; transition: all .3s; pointer-events: none; z-index: 3000; box-shadow: var(--shadow-lg); max-width: 92vw; text-align: center; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast.error { background: var(--danger); color: #fff; }
+
+    /* ================= BOTTOM NAV (mobile) ================= */
+    .bottom-nav { display: none; }
+
+    /* ================= RESPONSIVE ================= */
+    @media (max-width: 1100px) {
+      .dash, .home-extras { grid-template-columns: 1fr; gap: 24px; }
+    }
+    @media (max-width: 900px) {
+      .sidebar { position: fixed; left: 0; top: 0; bottom: 0; height: auto; transform: translateX(-100%); width: 300px; max-width: 86vw; padding-top: calc(22px + env(safe-area-inset-top)); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+      .sidebar.open { transform: translateX(0); box-shadow: 6px 0 24px rgba(0, 0, 0, .2); }
+      .profile { margin: 16px 0 14px; }
+      .avatar-ring { width: 64px; height: 64px; }
+      .avatar-ring span { font-size: 24px; }
+
+      .main { padding: calc(14px + env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom)); }
+      .top-header { margin-bottom: 14px; gap: 12px; }
+      .title-wrap { flex: 1; min-width: 0; }
+      .title-wrap .page-title { font-size: 30px; }
+      .title-wrap .greeting { font-size: 13px; }
+      .header-tools { width: 100%; flex-wrap: nowrap; }
+      .header-tools .search-pill { flex: 1; width: auto; min-width: 0; }
+      .header-tools .desk-only { display: none; }
+      .chips { display: flex; }
+
+      .dash { margin-bottom: 24px; }
+      .stats { gap: 14px 18px; }
+      .stat .num { font-size: 28px; }
+      .promo { min-height: 150px; padding: 20px; border-radius: 22px; }
+      .promo h3 { font-size: 20px; max-width: 58%; }
+      .promo p { max-width: 58%; }
+      .cta-wrap { width: 62px; height: 62px; right: 40px; }
+      .cta-wrap svg.arcs { width: 176px; height: 176px; }
+      .chart-wrap text { font-size: 16px; }
+      .home-extras { margin-bottom: 24px; }
+      .section-title { font-size: 22px; }
+
+      .panel { padding: 16px 14px; border-radius: 24px; margin: 0 -4px; }
+      .resources-grid { grid-template-columns: 1fr; gap: 14px; }
+
+      .overlay { align-items: flex-end; padding: 0; }
+      .modal { border-radius: 28px 28px 0 0; max-width: 100%; padding: 22px 18px calc(28px + env(safe-area-inset-bottom)); animation: slideUp .3s cubic-bezier(.2, .8, .2, 1); position: relative; max-height: 92vh; }
+      .modal::before { content: ''; display: block; width: 44px; height: 5px; background: var(--line); border-radius: 3px; margin: -8px auto 16px; }
+      .modal h2 { font-size: 23px; margin-bottom: 16px; }
+      @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+      .modal-actions .btn { flex: 1; }
+      .bulk-column-grid { grid-template-columns: 1fr; gap: 12px; }
+      .bulk-textarea { min-height: 140px !important; }
+
+      .bottom-nav {
+        display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+        background: var(--card); border-top: 1px solid var(--line);
+        padding: 6px 6px calc(8px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 24px rgba(0, 0, 0, .06);
+      }
+      .bn-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; color: var(--muted); padding: 6px 0; min-height: 54px; position: relative; }
+      .bn-item .ic { font-size: 20px; line-height: 1.2; }
+      .bn-item.active { color: var(--blue-ink); }
+      .bn-item.active::after { content: ''; position: absolute; top: 0; width: 22px; height: 3px; border-radius: 3px; background: var(--blue); }
+      .bn-add { background: var(--blue); color: #fff; width: 58px; height: 58px; border-radius: 50%; border: 4px solid var(--card); font-size: 30px; font-weight: 400; justify-self: center; margin-top: -26px; box-shadow: 0 8px 20px rgba(50, 156, 255, .5); line-height: 1; }
+      .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+    }
+    @media (min-width: 901px) { .mobile-only { display: none !important; } }
+    @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img class="logo-mark" src="icons/logo-mark.png" alt="" width="36" height="36">
+        Designer Hub
+      </div>
+
+      <div class="profile">
+        <div class="avatar-ring"><span>D</span></div>
+        <div class="name">Designer</div>
+        <div class="role">Resource Library</div>
+      </div>
+
+      <div class="side-scroll">
+        <div class="nav-list">
+          <button class="nav-item active" id="navAll" data-act="view" data-view="all">
+            <span class="nav-content"><span>⊞</span><span class="txt">Dashboard</span></span>
+            <span class="nav-badge" id="badgeTotal">0</span>
+          </button>
+          <button class="nav-item" id="navFav" data-act="view" data-view="favorites">
+            <span class="nav-content"><span>⭐</span><span class="txt">Favorites</span></span>
+            <span class="nav-badge" id="badgeFav">0</span>
+          </button>
+        </div>
+
+        <div class="nav-label">
+          <span>Categories</span>
+          <button class="icon-btn" style="width:34px;height:34px;font-size:14px;box-shadow:none;" title="Manage Categories" onclick="openCategoriesModal(); closeSidebar();">⚙️</button>
+        </div>
+        <div class="nav-list" id="sidebarCategoryList"></div>
+      </div>
+
+      <div class="side-footer">
+        <button class="nav-item" onclick="openAddModal(); closeSidebar();"><span class="nav-content"><span>＋</span><span class="txt">Add Resource</span></span></button>
+        <button class="nav-item" onclick="openBulkModal(); closeSidebar();"><span class="nav-content"><span>⚡</span><span class="txt">Bulk Add</span></span></button>
+        <button class="nav-item" id="installBtnSide" onclick="installApp()"><span class="nav-content"><span>📲</span><span class="txt">Install App</span></span></button>
+        <button class="nav-item" onclick="toggleTheme()"><span class="nav-content"><span id="themeIconSide">🌙</span><span class="txt" id="themeTextSide">Dark Theme</span></span></button>
+        <button class="nav-item" onclick="openSetup(); closeSidebar();"><span class="nav-content"><span>🔗</span><span class="txt">Connection</span></span></button>
+      </div>
+    </aside>
+
+    <!-- ================= MAIN ================= -->
+    <main class="main">
+      <header class="top-header">
+        <div class="title-wrap">
+          <h1 class="page-title" id="pageTitle">Dashboard</h1>
+          <div class="greeting" id="greetingTitle"></div>
+        </div>
+        <div class="header-tools">
+          <label class="search-pill">
+            <span aria-hidden="true">🔍</span>
+            <input type="search" id="headerSearch" placeholder="Search resources..." oninput="filterResources()" aria-label="Search resources">
+          </label>
+          <button class="icon-btn" id="refreshBtn" onclick="loadAll(true)" title="Refresh Data" aria-label="Refresh">🔄</button>
+          <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Switch Theme" aria-label="Switch theme">🌙</button>
+          <button class="icon-btn desk-only" onclick="openCategoriesModal()" title="Manage Categories" aria-label="Manage categories">⚙️</button>
+        </div>
+      </header>
+
+      <div class="chips" id="chipRow"></div>
+
+      <div class="install-banner" id="installBanner">
+        <span style="font-size:26px">📲</span>
+        <div class="ib-text"><b>Install Designer Hub</b>Add it to your home screen for one-tap access.</div>
+        <button class="btn" style="height:40px;padding:0 18px;font-size:14px;" onclick="installApp()">Install</button>
+        <button class="x" onclick="dismissInstallBanner()" aria-label="Dismiss">✕</button>
+      </div>
+
+      <!-- Stats + promo -->
+      <section class="dash">
+        <div class="stats">
+          <div class="stat"><div class="label"><i style="background:var(--blue)"></i>Total Resources</div><div class="num" id="statTotal">0</div></div>
+          <div class="stat"><div class="label"><i style="background:var(--green)"></i>Categories</div><div class="num" id="statCategories">0</div></div>
+          <div class="stat"><div class="label"><i style="background:var(--yellow)"></i>Favorites</div><div class="num" id="statFavorites">0</div></div>
+          <div class="stat"><div class="label"><i style="background:var(--ink)"></i>Showing Now</div><div class="num" id="statShowing">0</div></div>
+        </div>
+
+        <div class="promo">
+          <h3 class="serif">Grow your <em>Library</em></h3>
+          <p>Save new links one by one or paste many at once.</p>
+          <div class="promo-actions"><button class="pill-btn" onclick="openBulkModal()">⚡ Bulk Add</button></div>
+          <div class="cta-wrap">
+            <svg class="arcs" viewBox="0 0 200 200" aria-hidden="true" fill="none" stroke-linecap="round" stroke-width="13">
+              <path d="M24 100 A76 76 0 0 1 176 100" stroke="#FFCA36"/>
+              <path d="M40 100 A60 60 0 0 1 160 100" stroke="#11CBA4"/>
+              <path d="M56 100 A44 44 0 0 1 144 100" stroke="#329CFF" opacity=".55"/>
+            </svg>
+            <button class="round-cta" onclick="openAddModal()" aria-label="Add resource">ADD</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Home-only: chart + recent -->
+      <section class="home-extras" id="homeExtras">
+        <div>
+          <div class="section-title"><span>Library Overview</span><small>Resources per category</small></div>
+          <div class="chart-wrap" id="chartWrap"></div>
+        </div>
+        <div>
+          <div class="section-title"><span>Recently Added</span></div>
+          <div class="recent-list" id="recentList"></div>
+        </div>
+      </section>
+
+      <!-- Resource library -->
+      <section class="panel">
+        <div class="section-title"><span id="libTitle">Resource Library</span><small id="libCount"></small></div>
+        <div id="resourcesContainer" class="resources-grid">
+          <div class="empty-state"><div class="loader-spinner"></div><div>Loading your awesome resources...</div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Bottom nav (mobile) -->
+  <nav class="bottom-nav" aria-label="Main">
+    <button class="bn-item active" id="bnHome" data-act="view" data-view="all"><span class="ic">🏠</span>Home</button>
+    <button class="bn-item" id="bnFav" data-act="view" data-view="favorites"><span class="ic">⭐</span>Favorites</button>
+    <button class="bn-add" onclick="openAddModal()" aria-label="Add resource">＋</button>
+    <button class="bn-item" onclick="openBulkModal()"><span class="ic">⚡</span>Bulk</button>
+    <button class="bn-item" onclick="toggleSidebar()"><span class="ic">☰</span>More</button>
+  </nav>
+
+  <!-- PIN modal -->
+  <div class="overlay" id="pinModal">
+    <div class="modal" style="max-width:350px;text-align:center;">
+      <div style="font-size:40px;margin-bottom:10px;">🔒</div>
+      <h2 id="pinModalTitle" style="margin-bottom:6px;">Unlock Category</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Please enter the PIN to access this category.</p>
+      <div class="form-group">
+        <input type="password" id="unlockPinInput" inputmode="numeric" autocomplete="off" placeholder="Enter PIN..." style="text-align:center;letter-spacing:3px;font-size:20px;" onkeydown="if(event.key==='Enter') verifyPin()">
+      </div>
+      <div class="modal-actions" style="justify-content:center;">
+        <button class="btn secondary" onclick="closePinModal()" style="flex:1;">Cancel</button>
+        <button class="btn" onclick="verifyPin()" style="flex:1;">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add / Edit resource -->
+  <div class="overlay" id="resourceModal">
+    <div class="modal">
+      <h2 id="modalTitle">Add New Resource</h2>
+      <div class="form-grid">
+        <input type="hidden" id="fId">
+        <div class="form-group"><label for="fName">Resource Name</label><input type="text" id="fName" placeholder="e.g. Freepik"></div>
+        <div class="form-group"><label for="fUrl">URL Link</label><input type="url" id="fUrl" placeholder="https://..."></div>
+        <div class="form-group"><label for="fCategory">Category</label><select id="fCategory"></select></div>
+        <div class="form-group"><label for="fDesc">Description</label><textarea id="fDesc" placeholder="Brief description..."></textarea></div>
+        <div class="form-group"><label for="fTags">Tags (Comma separated)</label><input type="text" id="fTags" placeholder="free, vectors, mockup"></div>
+        <div class="check-row"><input type="checkbox" id="fFav"><label for="fFav">⭐ Mark as Favorite</label></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn" id="saveBtn" onclick="saveResource()">Save Resource</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="overlay" id="categoriesModal">
+    <div class="modal">
+      <h2>🏷️ Manage Categories</h2>
+      <div class="form-group" style="margin-bottom:18px;">
+        <label for="newCategoryName">Add New Category</label>
+        <div class="add-cat-row">
+          <input type="text" id="newCategoryName" placeholder="Category name...">
+          <input type="password" id="newCategoryPin" class="pin" placeholder="PIN (optional)" autocomplete="off">
+          <button class="btn" onclick="addNewCategory()" style="height:48px;">Add</button>
+        </div>
+      </div>
+      <div class="cat-manage-list" id="categoriesListWrap">Loading...</div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Use ▲ ▼ to change the order (on desktop you can also drag categories in the sidebar).</p>
+      <div class="modal-actions"><button class="btn secondary" onclick="closeCategoriesModal()">Close</button></div>
+    </div>
+  </div>
+
+  <!-- Bulk add -->
+  <div class="overlay" id="bulkResourceModal">
+    <div class="modal bulk-modal">
+      <h2>⚡ Bulk Add Resources</h2>
+      <p class="bulk-help">
+        Excel/Google Sheet থেকে প্রতিটি কলাম আলাদা করে copy করে নিচের box-এ paste করুন।
+        একই লাইনের Name + URL + Tag একসাথে একটি resource হিসেবে save হবে।
+      </p>
+      <div class="form-grid">
+        <div class="form-group"><label for="bulkCategory">Category</label><select id="bulkCategory"></select></div>
+        <div class="bulk-column-grid">
+          <div class="form-group">
+            <label for="bulkNames">Resource Name <span class="required">*</span></label>
+            <textarea id="bulkNames" class="bulk-textarea" spellcheck="false" placeholder="Freepik&#10;Font Awesome&#10;Google Fonts"></textarea>
+            <div class="bulk-count" id="bulkNameCount">0 lines</div>
+          </div>
+          <div class="form-group">
+            <label for="bulkUrls">URL <span class="required">*</span></label>
+            <textarea id="bulkUrls" class="bulk-textarea" spellcheck="false" placeholder="https://www.freepik.com/&#10;https://fontawesome.com/&#10;https://fonts.google.com/"></textarea>
+            <div class="bulk-count" id="bulkUrlCount">0 lines</div>
+          </div>
+          <div class="form-group">
+            <label for="bulkTags">Tag <span class="optional">(optional)</span></label>
+            <textarea id="bulkTags" class="bulk-textarea" spellcheck="false" placeholder="vector, stock&#10;icons, font&#10;fonts, google"></textarea>
+            <div class="bulk-count" id="bulkTagCount">0 lines</div>
+          </div>
+        </div>
+        <div id="bulkPreview" class="bulk-preview">Paste your data to see the line count.</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" onclick="closeBulkModal()">Cancel</button>
+        <button class="btn" id="bulkSaveBtn" onclick="saveBulkResources()">⚡ Save All Resources</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection / setup -->
+  <div class="overlay" id="setupModal">
+    <div class="modal">
+      <h2>🔗 Connect to your Sheet</h2>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">
+        Paste the <b>Web App URL</b> of your deployed Google Apps Script (it ends with <code>/exec</code>). It is saved only on this device.
+      </p>
+      <div class="form-group">
+        <label for="apiUrlInput">Web App URL</label>
+        <input type="url" id="apiUrlInput" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" onclick="closeSetup()">Close</button>
+        <button class="btn" id="setupSaveBtn" onclick="saveSetup()">Save &amp; Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Install help -->
+  <div class="overlay" id="installHelpModal">
+    <div class="modal">
+      <h2>📲 Install as an App</h2>
+      <div id="installHelpBody"></div>
+      <div class="modal-actions"><button class="btn" onclick="closeOverlay('installHelpModal')">Got it</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    /* =====================================================================
+       CONFIG — paste your Apps Script Web App URL here (optional).
+       If left empty, the app asks for it on first launch and remembers it.
+       ===================================================================== */
+    const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyHavUvusdiNJKv_Z--fO3yGks3p9bZS61sTmlKImnD1yc8k-9AMvjlYYIwxF6m-rFeCg/exec';
+    let API_URL = localStorage.getItem('dhApiUrl') || DEFAULT_API_URL;
+
+    const READ_FNS = new Set(['getInitialData', 'getResources', 'getCategories', 'getCategoryDetails']);
+    const $ = id => document.getElementById(id);
+
+    /* ================= API LAYER (replaces google.script.run) ================= */
+    async function api(fn, ...args) {
+      if (!API_URL) { openSetup(); throw new Error('Connect your Google Sheet first'); }
+      let res;
+      if (READ_FNS.has(fn)) {
+        const q = new URLSearchParams({ fn, args: JSON.stringify(args) });
+        res = await fetch(API_URL + (API_URL.includes('?') ? '&' : '?') + q.toString(), { redirect: 'follow' });
+      } else {
+        // text/plain avoids a CORS pre-flight, which Apps Script does not support
+        res = await fetch(API_URL, {
+          method: 'POST', redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ fn, args })
+        });
+      }
+      let json;
+      try { json = await res.json(); } catch (e) { throw new Error('Bad response – check the Web App URL / access ("Anyone")'); }
+      if (!json.ok) throw new Error(json.error || 'API error');
+      return json.data;
+    }
+
+    /* ================= STATE ================= */
+    let allResources = [];
+    let filteredResources = [];
+    let categoriesList = [];
+    let currentView = 'all';
+    let editingResource = null;
+    let categoryPins = {};
+    let unlockedCategories = [];
+    let targetLockedCategory = null;
+    let draggedCategoryIndex = null;
+    let deferredInstallPrompt = null;
+
+    const tintOf = cat => { const i = categoriesList.indexOf(cat); return 'tint-' + ((i < 0 ? 0 : i) % 3); };
+    const dotVar = i => ['var(--yellow)', 'var(--green)', 'var(--blue)'][i % 3];
+    const isLocked = cat => !!categoryPins[cat] && !unlockedCategories.includes(cat);
+
+    /* ================= INIT ================= */
+    window.addEventListener('load', () => {
+      initTheme();
+      setGreeting();
+      initBulkImportListeners();
+      initCategoryDragAndDrop();
+      initInstall();
+
+      // cached data (instant paint). Pins are cached too so locked categories never flash.
+      try {
+        const c = JSON.parse(localStorage.getItem('designerCats') || 'null');
+        if (Array.isArray(c) && (c.length === 0 || typeof c[0] === 'string')) categoriesList = c;
+        categoryPins = JSON.parse(localStorage.getItem('designerPins') || '{}') || {};
+        const r = JSON.parse(localStorage.getItem('designerRes') || 'null');
+        if (Array.isArray(r)) allResources = r;
+      } catch (e) {}
+      renderAll();
+
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+
+      if (!API_URL) { openSetup(); } else { loadAll(false); }
+
+      // app shortcut: ?action=add
+      if (new URLSearchParams(location.search).get('action') === 'add') setTimeout(openAddModal, 600);
+    });
+
+    /* ================= THEME (Light 3-color + Dark) ================= */
+    function initTheme() {
+      const saved = localStorage.getItem('dhTheme');
+      const theme = saved || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      applyTheme(theme);
+    }
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const dark = theme === 'dark';
+      $('themeBtn').textContent = dark ? '☀️' : '🌙';
+      $('themeIconSide').textContent = dark ? '☀️' : '🌙';
+      $('themeTextSide').textContent = dark ? 'Light Theme' : 'Dark Theme';
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0E1317' : '#329CFF');
+      localStorage.setItem('dhTheme', theme);
+      if ($('chartWrap') && categoriesList.length) renderChart();
+    }
+    function toggleTheme() {
+      applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    }
+
+    /* ================= SIDEBAR (mobile drawer) ================= */
+    function toggleSidebar() { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('show'); }
+    function closeSidebar() { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); }
+
+    function setGreeting() {
+      const h = new Date().getHours();
+      const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+      const e = h < 12 ? '☀️' : h < 18 ? '🌤️' : '🌙';
+      $('greetingTitle').textContent = `${g}, Designer ${e}`;
+    }
+
+    /* ================= LOAD DATA ================= */
+    function cacheAll() {
+      localStorage.setItem('designerCats', JSON.stringify(categoriesList));
+      localStorage.setItem('designerRes', JSON.stringify(allResources));
+      localStorage.setItem('designerPins', JSON.stringify(categoryPins));
+    }
+
+    async function loadAll(isManual) {
+      if (isManual) {
+        showToast('Refreshing data...');
+        $('refreshBtn').classList.add('spin');
+      }
+      try {
+        const d = await api('getInitialData');
+        allResources = d.resources || [];
+        categoriesList = d.categories || [];
+        categoryPins = d.pins || {};
+        cacheAll();
+        if (currentView !== 'all' && currentView !== 'favorites' && !categoriesList.includes(currentView)) currentView = 'all';
+        renderAll();
+        if (isManual) showToast('Data refreshed ✅');
+      } catch (err) {
+        if (!allResources.length) $('resourcesContainer').innerHTML = '<div class="empty-state"><h3>Could not load data</h3><p>' + escapeHtml(err.message) + '</p></div>';
+        showToast(navigator.onLine ? 'Error: ' + err.message : 'Offline – showing saved data', true);
+      } finally {
+        $('refreshBtn').classList.remove('spin');
+      }
+    }
+
+    async function loadResources() {
+      try {
+        allResources = await api('getResources') || [];
+        localStorage.setItem('designerRes', JSON.stringify(allResources));
+        renderAll();
+      } catch (err) { showToast('Error: ' + err.message, true); }
+    }
+
+    function renderAll() {
+      populateCategoryNav();
+      populateCategorySelect();
+      populateBulkCategorySelect();
+      updateViewTitle();
+      filterResources();
+    }
+
+    /* ================= PIN LOCK ================= */
+    function attemptShowView(viewName) {
+      closeSidebar();
+      if (viewName === 'all' || viewName === 'favorites') { showView(viewName); return; }
+      if (isLocked(viewName)) {
+        targetLockedCategory = viewName;
+        $('pinModalTitle').textContent = viewName;
+        $('unlockPinInput').value = '';
+        $('pinModal').classList.add('show');
+        setTimeout(() => $('unlockPinInput').focus(), 100);
+        return;
+      }
+      showView(viewName);
+    }
+
+    function verifyPin() {
+      if (!targetLockedCategory) return;
+      const userPin = $('unlockPinInput').value.trim();
+      if (userPin !== categoryPins[targetLockedCategory]) {
+        showToast('Incorrect PIN!', true);
+        $('unlockPinInput').value = '';
+        $('unlockPinInput').focus();
+        return;
+      }
+      unlockedCategories.push(targetLockedCategory);
+      const cat = targetLockedCategory;
+      showToast('Category Unlocked 🔓');
+      closePinModal();
+      showView(cat);
+    }
+    function closePinModal() { $('pinModal').classList.remove('show'); targetLockedCategory = null; }
+
+    /* ================= NAV / VIEWS ================= */
+    function populateCategoryNav() {
+      const list = $('sidebarCategoryList');
+      const chips = $('chipRow');
+      if (categoriesList.length === 0) {
+        list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding-left:14px;">No categories.</div>';
+        chips.innerHTML = '';
+        return;
+      }
+      list.innerHTML = categoriesList.map((cat, i) => {
+        const count = allResources.filter(r => r.category === cat).length;
+        const lock = categoryPins[cat] ? (isLocked(cat) ? '🔒' : '🔓') : '';
+        return `<button class="nav-item cat-item ${currentView === cat ? 'active' : ''}" data-act="view" data-view="${escapeHtml(cat)}" data-index="${i}" draggable="true">
+          <span class="nav-content"><span class="dot" style="background:${dotVar(i)}"></span><span class="txt">${escapeHtml(cat)}</span><span style="font-size:12px">${lock}</span></span>
+          <span class="nav-badge">${count}</span></button>`;
+      }).join('');
+
+      chips.innerHTML =
+        `<button class="chip-btn ${currentView === 'all' ? 'active' : ''}" data-act="view" data-view="all">All</button>` +
+        categoriesList.map((cat, i) => {
+          const lock = categoryPins[cat] ? (isLocked(cat) ? '🔒' : '🔓') : '';
+          return `<button class="chip-btn ${currentView === cat ? 'active' : ''}" data-act="view" data-view="${escapeHtml(cat)}"><span class="dot" style="background:${dotVar(i)}"></span>${escapeHtml(cat)} ${lock}</button>`;
+        }).join('');
+    }
+
+    function populateCategorySelect() {
+      const sel = $('fCategory'); const prev = sel.value;
+      sel.innerHTML = '<option value="">Select a category</option>' + categoriesList.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      if (prev && categoriesList.includes(prev)) sel.value = prev;
+    }
+
+    function updateViewTitle() {
+      const titles = { all: 'Dashboard', favorites: 'Favorites' };
+      $('pageTitle').textContent = titles[currentView] || currentView;
+      $('libTitle').textContent = currentView === 'all' ? 'Resource Library' : (titles[currentView] || currentView);
+      $('navAll').classList.toggle('active', currentView === 'all');
+      $('navFav').classList.toggle('active', currentView === 'favorites');
+      $('bnHome').classList.toggle('active', currentView === 'all');
+      $('bnFav').classList.toggle('active', currentView === 'favorites');
+    }
+
+    function showView(viewName) {
+      currentView = viewName;
+      $('headerSearch').value = '';
+      populateCategoryNav();
+      updateViewTitle();
+      filterResources();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateStats() {
+      $('statTotal').textContent = allResources.length;
+      $('statCategories').textContent = categoriesList.length;
+      const favs = allResources.filter(r => r.favorite).length;
+      $('statFavorites').textContent = favs;
+      $('statShowing').textContent = filteredResources.length;
+      $('badgeTotal').textContent = allResources.length;
+      $('badgeFav').textContent = favs;
+      $('libCount').textContent = filteredResources.length + (filteredResources.length === 1 ? ' resource' : ' resources');
+    }
+
+    function filterResources() {
+      const search = ($('headerSearch').value || '').toLowerCase();
+      filteredResources = allResources.filter(r => {
+        if (isLocked(r.category)) return false;
+        const matchesSearch = !search ||
+          (r.name && r.name.toLowerCase().includes(search)) ||
+          (r.description && r.description.toLowerCase().includes(search)) ||
+          (r.tags && r.tags.toLowerCase().includes(search));
+        let matchesView = true;
+        if (currentView === 'favorites') matchesView = r.favorite === true;
+        else if (currentView !== 'all') matchesView = r.category === currentView;
+        return matchesSearch && matchesView;
+      });
+      renderCards();
+      renderHome(!search && currentView === 'all');
+      updateStats();
+    }
+
+    /* ================= CARDS ================= */
+    const fixUrl = u => (/^https?:\/\//i.test(u) ? u : 'https://' + u);
+    const hostOf = u => { try { return new URL(fixUrl(u)).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
+    const faviconOf = u => { const h = hostOf(u); return h ? `<img src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(h)}&sz=64" alt="" loading="lazy" onerror="this.remove()">` : ''; };
+    const initial = n => escapeHtml((n || '?').trim().charAt(0).toUpperCase());
+
+    function renderCards() {
+      const c = $('resourcesContainer');
+      if (filteredResources.length === 0) {
+        c.innerHTML = '<div class="empty-state"><h3>No resources found.</h3><p>Tap ＋ to add a new resource.</p></div>';
+        return;
+      }
+      c.innerHTML = filteredResources.map(r => {
+        const tags = r.tags ? r.tags.split(',').filter(t => t.trim()).slice(0, 3).map(t => `<span class="tag">${escapeHtml(t.trim())}</span>`).join('') : '';
+        return `<article class="rcard ${tintOf(r.category)}">
+          <div class="rc-top">
+            <div class="rc-ico">${initial(r.name)}${faviconOf(r.url)}</div>
+            <div class="rc-head"><h3>${escapeHtml(r.name)}</h3><span class="rc-cat">${escapeHtml(r.category || 'Uncategorized')}</span></div>
+            <button class="fav-btn ${r.favorite ? 'active' : ''}" data-act="fav" data-id="${escapeHtml(r.id)}" aria-label="Toggle favorite">★</button>
+          </div>
+          <div class="rc-desc">${escapeHtml(r.description || 'No description available.')}</div>
+          ${tags ? `<div class="tags">${tags}</div>` : ''}
+          <div class="rc-actions">
+            <a class="btn-visit" href="${escapeHtml(fixUrl(r.url))}" target="_blank" rel="noopener noreferrer">Visit Site</a>
+            <div class="mini-btns">
+              <button class="sq-btn" data-act="edit" data-id="${escapeHtml(r.id)}" title="Edit" aria-label="Edit">✏️</button>
+              <button class="sq-btn del" data-act="del" data-id="${escapeHtml(r.id)}" title="Delete" aria-label="Delete">🗑️</button>
+            </div>
+          </div>
+        </article>`;
+      }).join('');
+    }
+
+    /* ================= HOME EXTRAS: chart + recent ================= */
+    function renderHome(show) {
+      $('homeExtras').style.display = show ? '' : 'none';
+      if (!show) return;
+      renderChart();
+      renderRecent();
+    }
+
+    function renderRecent() {
+      const list = $('recentList');
+      const items = allResources.filter(r => !isLocked(r.category))
+        .slice().sort((a, b) => (b.dateAdded || '').localeCompare(a.dateAdded || '')).slice(0, 4);
+      if (!items.length) { list.innerHTML = '<div class="empty-mini">Nothing added yet.</div>'; return; }
+      list.innerHTML = items.map(r => `
+        <button class="recent-item ${tintOf(r.category)}" data-act="open" data-id="${escapeHtml(r.id)}">
+          <span class="mini-av">${initial(r.name)}${faviconOf(r.url)}</span>
+          <span class="r-body"><div class="r-name">${escapeHtml(r.name)}</div><div class="r-sub">${escapeHtml(hostOf(r.url))}</div></span>
+          <span class="r-cat">${escapeHtml(r.category || '—')}</span>
+        </button>`).join('') +
+        `<button class="view-more" data-act="scrollLib">View all ›</button>`;
+    }
+
+    let chartPts = [], chartData = [];
+    function renderChart() {
+      const wrap = $('chartWrap');
+      chartData = categoriesList.map(c => ({ name: c, n: allResources.filter(r => r.category === c).length }));
+      if (!chartData.length) { wrap.innerHTML = '<div class="empty-mini">Add a category to see your overview.</div>'; return; }
+      const W = 560, H = 220, pl = 34, pr = 16, pt = 18, pb = 36;
+      const max = Math.max(4, ...chartData.map(d => d.n));
+      const top = Math.ceil(max / 4) * 4;
+      const x = i => chartData.length === 1 ? pl + (W - pl - pr) / 2 : pl + i * (W - pl - pr) / (chartData.length - 1);
+      const y = v => pt + (H - pt - pb) * (1 - v / top);
+      chartPts = chartData.map((d, i) => [x(i), y(d.n)]);
+      const clampY = v => Math.min(H - pb, Math.max(pt, v));
+
+      let path = `M${chartPts[0][0]},${chartPts[0][1]}`;
+      for (let i = 0; i < chartPts.length - 1; i++) {
+        const p0 = chartPts[i - 1] || chartPts[i], p1 = chartPts[i], p2 = chartPts[i + 1], p3 = chartPts[i + 2] || p2;
+        const c1 = [p1[0] + (p2[0] - p0[0]) / 6, clampY(p1[1] + (p2[1] - p0[1]) / 6)];
+        const c2 = [p2[0] - (p3[0] - p1[0]) / 6, clampY(p2[1] - (p3[1] - p1[1]) / 6)];
+        path += ` C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${p2[0]},${p2[1]}`;
+      }
+      const ticks = [0, top / 2, top];
+      const grid = ticks.map(t => `<line x1="${pl}" x2="${W - pr}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-dasharray="${t === 0 ? '0' : '3 4'}"/><text x="${pl - 8}" y="${y(t) + 4}" text-anchor="end">${t}</text>`).join('');
+      const step = chartData.length > 7 ? 2 : 1;
+      const labels = chartData.map((d, i) => i % step ? '' : `<text x="${chartPts[i][0]}" y="${H - 12}" text-anchor="middle">${escapeHtml(d.name.length > 9 ? d.name.slice(0, 8) + '…' : d.name)}</text>`).join('');
+      const hits = chartPts.map((p, i) => `<circle class="hit" data-i="${i}" cx="${p[0]}" cy="${p[1]}" r="18" fill="transparent" style="cursor:pointer"/>`).join('');
+
+      wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Resources per category">
+          ${grid}${labels}
+          ${chartData.length > 1 ? `<path d="${path}" fill="none" stroke="var(--yellow)" stroke-width="4" stroke-linecap="round"/>` : ''}
+          <circle id="chartDot" r="7" fill="var(--yellow)" stroke="var(--card)" stroke-width="3"/>
+          ${hits}
+        </svg><div class="chart-tip" id="chartTip"></div>`;
+      wrap.querySelectorAll('.hit').forEach(h => {
+        h.addEventListener('pointerenter', () => showTip(+h.dataset.i));
+        h.addEventListener('click', () => showTip(+h.dataset.i));
+      });
+      showTip(chartData.reduce((m, d, i, a) => d.n > a[m].n ? i : m, 0));
+    }
+    function showTip(i) {
+      const dot = $('chartDot'), tip = $('chartTip'); if (!dot || !tip || !chartPts[i]) return;
+      const W = 560, H = 220;
+      dot.setAttribute('cx', chartPts[i][0]); dot.setAttribute('cy', chartPts[i][1]);
+      tip.style.left = Math.min(88, Math.max(12, chartPts[i][0] / W * 100)) + '%';
+      tip.style.top = (chartPts[i][1] / H * 100) + '%';
+      tip.innerHTML = `<b>${chartData[i].n}</b>${escapeHtml(chartData[i].name)}`;
+    }
+
+    /* ================= BULK IMPORT (unchanged logic) ================= */
+    function initBulkImportListeners() {
+      ['bulkNames', 'bulkUrls', 'bulkTags'].forEach(id => {
+        const el = $(id);
+        el.addEventListener('input', updateBulkCounts);
+        el.addEventListener('paste', () => setTimeout(updateBulkCounts, 0));
+      });
+      $('bulkCategory').addEventListener('change', updateBulkCounts);
+    }
+    function normalizeBulkLines(value) {
+      return String(value || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(v => v.trim()).filter(v => v !== '');
+    }
+    function updateBulkCounts() {
+      const names = normalizeBulkLines($('bulkNames').value);
+      const urls = normalizeBulkLines($('bulkUrls').value);
+      const tags = normalizeBulkLines($('bulkTags').value);
+      $('bulkNameCount').textContent = names.length + ' lines';
+      $('bulkUrlCount').textContent = urls.length + ' lines';
+      $('bulkTagCount').textContent = tags.length + ' lines';
+      const preview = $('bulkPreview');
+      if (!names.length && !urls.length && !tags.length) { preview.className = 'bulk-preview'; preview.textContent = 'Paste your data to see the line count.'; return; }
+      if (names.length !== urls.length) { preview.className = 'bulk-preview error'; preview.textContent = `❌ Name: ${names.length} lines, URL: ${urls.length} lines — Name এবং URL-এর line count অবশ্যই একই হতে হবে।`; return; }
+      if (tags.length && tags.length !== names.length) { preview.className = 'bulk-preview error'; preview.textContent = `❌ Name/URL: ${names.length} lines, Tag: ${tags.length} lines — Tag দিলে Tag-এর line count-ও একই হতে হবে।`; return; }
+      preview.className = 'bulk-preview ok';
+      preview.textContent = `✅ ${names.length}টি resource ready — Category: ${$('bulkCategory').value || 'Not selected'}`;
+    }
+    function populateBulkCategorySelect() {
+      const sel = $('bulkCategory'); const prev = sel.value;
+      sel.innerHTML = '<option value="">Select a category</option>' + categoriesList.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      if (prev && categoriesList.includes(prev)) sel.value = prev;
+    }
+    function openBulkModal() {
+      closeSidebar();
+      if (categoriesList.length === 0) { showToast('Please add a category first (⚙️ Manage Categories).', true); return; }
+      $('bulkNames').value = ''; $('bulkUrls').value = ''; $('bulkTags').value = '';
+      populateBulkCategorySelect();
+      const last = localStorage.getItem('designerBulkCategory');
+      if (last && categoriesList.includes(last)) $('bulkCategory').value = last; else $('bulkCategory').selectedIndex = 0;
+      $('bulkResourceModal').classList.add('show');
+      updateBulkCounts();
+    }
+    function closeBulkModal() { $('bulkResourceModal').classList.remove('show'); }
+
+    async function saveBulkResources() {
+      const category = $('bulkCategory').value;
+      const names = normalizeBulkLines($('bulkNames').value);
+      const urls = normalizeBulkLines($('bulkUrls').value);
+      const tags = normalizeBulkLines($('bulkTags').value);
+      if (!category) return showToast('Please select a category.', true);
+      if (!names.length || !urls.length) return showToast('Name and URL data are required.', true);
+      if (names.length !== urls.length) return showToast('Name and URL line count must be the same.', true);
+      if (tags.length && tags.length !== names.length) return showToast('Tag line count must match Name/URL line count.', true);
+
+      const resources = names.map((name, i) => ({ name, url: urls[i], category, description: '', tags: tags[i] || '', favorite: false }));
+      const btn = $('bulkSaveBtn'); btn.disabled = true; btn.textContent = `Saving ${resources.length}...`;
+      localStorage.setItem('designerBulkCategory', category);
+      try {
+        const result = await api('addResourcesBulk', resources);
+        if (result && result.success) {
+          showToast(`${result.added} resources added successfully ✅`);
+          closeBulkModal(); loadAll(false);
+        } else showToast((result && result.message) || 'Bulk save failed.', true);
+      } catch (err) { showToast('Error: ' + (err.message || err), true); }
+      btn.disabled = false; btn.textContent = '⚡ Save All Resources';
+    }
+
+    /* ================= RESOURCE CRUD ================= */
+    function openAddModal() {
+      closeSidebar();
+      if (categoriesList.length === 0) { showToast('Please add a category first (⚙️ Manage Categories).', true); return; }
+      editingResource = null;
+      $('modalTitle').textContent = 'Add New Resource';
+      $('fId').value = ''; $('fName').value = ''; $('fUrl').value = '';
+      $('fCategory').value = (categoriesList.includes(currentView) ? currentView : '');
+      $('fDesc').value = ''; $('fTags').value = ''; $('fFav').checked = (currentView === 'favorites');
+      $('resourceModal').classList.add('show');
+      setTimeout(() => $('fName').focus(), 120);
+    }
+    function editRes(id) {
+      const r = allResources.find(x => x.id === id); if (!r) return;
+      editingResource = r;
+      $('modalTitle').textContent = 'Edit Resource';
+      $('fId').value = r.id; $('fName').value = r.name; $('fUrl').value = r.url;
+      $('fCategory').value = r.category; $('fDesc').value = r.description; $('fTags').value = r.tags;
+      $('fFav').checked = r.favorite;
+      $('resourceModal').classList.add('show');
+    }
+    function closeModal() { $('resourceModal').classList.remove('show'); }
+
+    async function saveResource() {
+      const name = $('fName').value.trim(), url = $('fUrl').value.trim(), category = $('fCategory').value;
+      if (!name || !url || !category) return showToast('Name, URL and Category are required.', true);
+      const payload = { id: $('fId').value, name, url, category, description: $('fDesc').value.trim(), tags: $('fTags').value.trim(), favorite: $('fFav').checked };
+      const btn = $('saveBtn'); btn.disabled = true; btn.textContent = 'Saving...';
+      try {
+        const r = await api(editingResource ? 'updateResource' : 'addResource', payload);
+        if (r.success) { showToast(r.message); closeModal(); loadResources(); } else showToast(r.message, true);
+      } catch (err) { showToast('Error: ' + err.message, true); }
+      btn.disabled = false; btn.textContent = 'Save Resource';
+    }
+
+    async function toggleFav(id) {
+      const res = allResources.find(x => x.id === id); if (!res) return;
+      res.favorite = !res.favorite;
+      filterResources();
+      localStorage.setItem('designerRes', JSON.stringify(allResources));
+      try {
+        const r = await api('toggleFavorite', id);
+        if (!r.success) throw new Error(r.message);
+      } catch (err) {
+        res.favorite = !res.favorite; // revert
+        filterResources();
+        localStorage.setItem('designerRes', JSON.stringify(allResources));
+        showToast(err.message || 'Failed', true);
+      }
+    }
+
+    async function deleteRes(id) {
+      const r0 = allResources.find(x => x.id === id); if (!r0) return;
+      if (!confirm(`Delete resource "${r0.name}"?`)) return;
+      try {
+        const r = await api('deleteResource', id);
+        if (r.success) { showToast('Deleted.'); loadResources(); } else showToast(r.message, true);
+      } catch (err) { showToast('Error: ' + err.message, true); }
+    }
+
+    /* ================= CATEGORIES ================= */
+    function openCategoriesModal() {
+      closeSidebar();
+      $('categoriesModal').classList.add('show');
+      $('newCategoryName').value = ''; $('newCategoryPin').value = '';
+      renderCatList();
+    }
+    function closeCategoriesModal() { $('categoriesModal').classList.remove('show'); }
+
+    function renderCatList() {
+      const wrap = $('categoriesListWrap');
+      if (categoriesList.length === 0) { wrap.textContent = 'No categories found.'; return; }
+      wrap.innerHTML = categoriesList.map((cat, i) => `
+        <div class="cat-row">
+          <span class="nm"><span class="dot" style="background:${dotVar(i)}"></span>${escapeHtml(cat)} ${categoryPins[cat] ? '🔒' : ''}</span>
+          <span class="ctl">
+            <button data-act="catUp" data-i="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button>
+            <button data-act="catDown" data-i="${i}" ${i === categoriesList.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button>
+            <button data-act="catDel" data-i="${i}" aria-label="Delete category">🗑️</button>
+          </span>
+        </div>`).join('');
+    }
+
+    async function addNewCategory() {
+      const name = $('newCategoryName').value.trim();
+      const pin = $('newCategoryPin').value.trim();
+      if (!name) return;
+      try {
+        const r = await api('addCategory', name, pin);
+        if (r.success) {
+          showToast('Category added.');
+          $('newCategoryName').value = ''; $('newCategoryPin').value = '';
+          await loadAll(false); renderCatList();
+        } else showToast(r.message, true);
+      } catch (err) { showToast('Error: ' + err.message, true); }
+    }
+
+    async function delCat(name) {
+      if (!confirm(`Delete category "${name}"?`)) return;
+      try {
+        const r = await api('deleteCategory', name);
+        if (r.success) { showToast('Deleted.'); await loadAll(false); renderCatList(); } else showToast(r.message, true);
+      } catch (err) { showToast('Error: ' + err.message, true); }
+    }
+
+    function moveCategory(from, to) {
+      if (from === to || from < 0 || to < 0 || from >= categoriesList.length || to >= categoriesList.length) return;
+      const [cat] = categoriesList.splice(from, 1);
+      categoriesList.splice(to, 0, cat);
+      localStorage.setItem('designerCats', JSON.stringify(categoriesList));
+      populateCategoryNav(); populateCategorySelect(); populateBulkCategorySelect(); renderCatList(); renderChart();
+      api('updateCategoryOrder', categoriesList).catch(() => showToast('Order update failed', true));
+    }
+
+    /* drag & drop (desktop) – event delegation on the category list */
+    function initCategoryDragAndDrop() {
+      const list = $('sidebarCategoryList');
+      list.addEventListener('dragstart', e => {
+        const it = e.target.closest('.cat-item'); if (!it) return;
+        draggedCategoryIndex = +it.dataset.index; it.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(draggedCategoryIndex));
+      });
+      list.addEventListener('dragover', e => {
+        const it = e.target.closest('.cat-item'); if (!it) return;
+        e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+        if (draggedCategoryIndex !== null && +it.dataset.index !== draggedCategoryIndex) it.classList.add('drag-over');
+      });
+      list.addEventListener('dragleave', e => { const it = e.target.closest('.cat-item'); if (it) it.classList.remove('drag-over'); });
+      list.addEventListener('drop', e => {
+        const it = e.target.closest('.cat-item'); if (!it) return;
+        e.preventDefault(); it.classList.remove('drag-over');
+        if (draggedCategoryIndex !== null) moveCategory(draggedCategoryIndex, +it.dataset.index);
+      });
+      list.addEventListener('dragend', () => {
+        list.querySelectorAll('.cat-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+        draggedCategoryIndex = null;
+      });
+    }
+
+    /* ================= CONNECTION SETUP ================= */
+    function openSetup() { $('apiUrlInput').value = API_URL; $('setupModal').classList.add('show'); }
+    function closeSetup() { $('setupModal').classList.remove('show'); }
+    async function saveSetup() {
+      const url = $('apiUrlInput').value.trim();
+      if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(url) && !/^https:\/\/script\.googleusercontent\.com\//.test(url)) {
+        return showToast('Please paste the full Web App URL (ends with /exec).', true);
+      }
+      const old = API_URL; API_URL = url;
+      const btn = $('setupSaveBtn'); btn.disabled = true; btn.textContent = 'Connecting...';
+      try {
+        const d = await api('getInitialData');
+        localStorage.setItem('dhApiUrl', url);
+        allResources = d.resources || []; categoriesList = d.categories || []; categoryPins = d.pins || {};
+        cacheAll(); renderAll(); closeSetup(); showToast('Connected ✅');
+      } catch (err) { API_URL = old; showToast('Could not connect: ' + err.message, true); }
+      btn.disabled = false; btn.textContent = 'Save & Connect';
+    }
+
+    /* ================= INSTALL (PWA) ================= */
+    const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    function initInstall() {
+      if (isStandalone()) { $('installBtnSide').style.display = 'none'; return; }
+      window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; maybeShowInstallBanner(); });
+      window.addEventListener('appinstalled', () => { deferredInstallPrompt = null; $('installBanner').classList.remove('show'); $('installBtnSide').style.display = 'none'; showToast('App installed 🎉'); });
+      if (isIOS()) maybeShowInstallBanner();
+    }
+    function maybeShowInstallBanner() {
+      if (localStorage.getItem('dhInstallDismissed') === '1') return;
+      $('installBanner').classList.add('show');
+    }
+    function dismissInstallBanner() { localStorage.setItem('dhInstallDismissed', '1'); $('installBanner').classList.remove('show'); }
+
+    async function installApp() {
+      closeSidebar();
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        $('installBanner').classList.remove('show');
+        return;
+      }
+      const body = isIOS()
+        ? `<ol class="help-steps"><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (square with arrow).</li><li>Choose <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>. The app icon appears on your home screen.</li></ol>`
+        : `<ol class="help-steps"><li>Open the browser menu <b>⋮</b> (top-right in Chrome).</li><li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li><li>Confirm. The app icon appears on your home screen.</li></ol><p style="font-size:12px;color:var(--muted);margin-top:8px;">If you do not see the option, open this link in Chrome (Android) or Safari (iPhone).</p>`;
+      $('installHelpBody').innerHTML = body;
+      $('installHelpModal').classList.add('show');
+    }
+
+    /* ================= UTILS ================= */
+    function closeOverlay(id) { $(id).classList.remove('show'); }
+    let toastTimer;
+    function showToast(msg, isError) {
+      const t = $('toast');
+      t.textContent = msg; t.classList.toggle('error', !!isError); t.classList.add('show');
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+    }
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    /* ================= GLOBAL EVENT DELEGATION ================= */
+    document.addEventListener('click', e => {
+      const el = e.target.closest('[data-act]'); if (!el) return;
+      const id = el.dataset.id;
+      switch (el.dataset.act) {
+        case 'view': attemptShowView(el.dataset.view); break;
+        case 'fav': toggleFav(id); break;
+        case 'edit': editRes(id); break;
+        case 'del': deleteRes(id); break;
+        case 'open': { const r = allResources.find(x => x.id === id); if (r) window.open(fixUrl(r.url), '_blank', 'noopener'); break; }
+        case 'scrollLib': document.querySelector('.panel').scrollIntoView({ behavior: 'smooth' }); break;
+        case 'catUp': moveCategory(+el.dataset.i, +el.dataset.i - 1); break;
+        case 'catDown': moveCategory(+el.dataset.i, +el.dataset.i + 1); break;
+        case 'catDel': delCat(categoriesList[+el.dataset.i]); break;
+      }
+    });
+
+    // close modals by tapping the dark backdrop / Escape key
+    document.querySelectorAll('.overlay').forEach(o => o.addEventListener('mousedown', e => { if (e.target === o) o.classList.remove('show'); }));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.querySelectorAll('.overlay.show').forEach(o => o.classList.remove('show')); closeSidebar(); } });
+  </script>
+</body>
+</html>
