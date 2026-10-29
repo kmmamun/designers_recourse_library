@@ -631,20 +631,23 @@
     /* ================= API LAYER (replaces google.script.run) ================= */
     async function api(fn, ...args) {
       if (!API_URL) { openSetup(); throw new Error('Connect your Google Sheet first'); }
+      const HINT = 'Backend not reachable. Open Apps Script → paste the latest Code.gs → Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy (Access: Anyone).';
       let res;
-      if (READ_FNS.has(fn)) {
-        const q = new URLSearchParams({ fn, args: JSON.stringify(args) });
-        res = await fetch(API_URL + (API_URL.includes('?') ? '&' : '?') + q.toString(), { redirect: 'follow' });
-      } else {
-        // text/plain avoids a CORS pre-flight, which Apps Script does not support
-        res = await fetch(API_URL, {
-          method: 'POST', redirect: 'follow',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ fn, args })
-        });
-      }
+      try {
+        if (READ_FNS.has(fn)) {
+          const q = new URLSearchParams({ fn, args: JSON.stringify(args) });
+          res = await fetch(API_URL + (API_URL.includes('?') ? '&' : '?') + q.toString(), { redirect: 'follow' });
+        } else {
+          // text/plain avoids a CORS pre-flight, which Apps Script does not support
+          res = await fetch(API_URL, {
+            method: 'POST', redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ fn, args })
+          });
+        }
+      } catch (e) { throw new Error(navigator.onLine ? HINT : 'You are offline'); }
       let json;
-      try { json = await res.json(); } catch (e) { throw new Error('Bad response – check the Web App URL / access ("Anyone")'); }
+      try { json = await res.json(); } catch (e) { throw new Error(HINT); }
       if (!json.ok) throw new Error(json.error || 'API error');
       return json.data;
     }
