@@ -167,6 +167,12 @@
     .view-toggle button { width: 42px; height: 38px; border: none; background: transparent; border-radius: 999px; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; }
     .view-toggle button.active { background: var(--blue); color: #fff; }
     .view-toggle svg { width: 18px; height: 18px; }
+    .dup-warn { background: var(--yellow-soft); border: 1px solid var(--yellow); color: var(--yellow-ink); border-radius: 14px; padding: 10px 14px; font-size: 13px; line-height: 1.6; }
+    .dup-list { margin: 8px 0 0 18px; color: var(--ink); }
+    .bulk-preview.warn { color: var(--yellow-ink); border-color: var(--yellow); background: var(--yellow-soft); }
+    .seg { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+    .seg button { border: none; background: transparent; border-radius: 999px; padding: 0 16px; height: 34px; font-size: 13px; font-weight: 600; color: var(--muted); }
+    .seg button.active { background: var(--blue); color: #fff; }
     .rc-mid { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 
     .resources-grid.list { grid-template-columns: 1fr; gap: 10px; min-height: 0; }
@@ -600,6 +606,7 @@
         <input type="hidden" id="fId">
         <div class="form-group"><label for="fName">Resource Name</label><input type="text" id="fName" placeholder="e.g. Freepik"></div>
         <div class="form-group"><label for="fUrl">URL Link</label><input type="url" id="fUrl" placeholder="https://..."></div>
+        <div id="dupWarn" class="dup-warn" role="alert" style="display:none;"></div>
         <div class="form-group"><label for="fCategory">Category</label><select id="fCategory"></select></div>
         <div class="form-group"><label for="fDesc">Description</label><textarea id="fDesc" placeholder="Brief description..."></textarea></div>
         <div class="form-group"><label for="fTags">Tags (Comma separated)</label><input type="text" id="fTags" placeholder="free, vectors, mockup"></div>
@@ -624,8 +631,12 @@
           <button class="btn" onclick="addNewCategory()" style="height:48px;">Add</button>
         </div>
       </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+        <span style="font-size:13px;font-weight:600;">Order</span>
+        <span class="seg" role="group" aria-label="Category order"><button id="sortAz" data-act="catsort" data-m="az">A–Z</button><button id="sortCustom" data-act="catsort" data-m="custom">Custom</button></span>
+      </div>
       <div class="cat-manage-list" id="categoriesListWrap">Loading...</div>
-      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Use ▲ ▼ to change the order (on desktop you can also drag categories in the sidebar).</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px;">In <b>Custom</b> order you can use ▲ ▼ (or drag categories in the sidebar on desktop). <b>A–Z</b> sorts automatically.</p>
       <div class="form-group" style="margin-top:18px;">
         <label>🛡️ Delete protection</label>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
@@ -670,6 +681,15 @@
         <button class="btn secondary" onclick="closeBulkModal()">Cancel</button>
         <button class="btn" id="bulkSaveBtn" onclick="saveBulkResources()">⚡ Save All Resources</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Duplicate notice -->
+  <div class="overlay" id="dupModal" style="z-index:2500;">
+    <div class="modal" style="max-width:460px;">
+      <h2 id="dupTitle" style="margin-bottom:10px;">⚠️ Duplicate found</h2>
+      <div id="dupBody" style="font-size:14px;line-height:1.7;color:var(--muted);"></div>
+      <div class="modal-actions" id="dupActions" style="flex-wrap:wrap;"></div>
     </div>
   </div>
 
@@ -793,7 +813,49 @@
     // must be registered immediately (the event can fire before window 'load')
     window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; if (!isStandalone()) maybeShowInstallBanner(); });
 
-    const tintOf = cat => { const i = categoriesList.indexOf(cat); return 'tint-' + ((i < 0 ? 0 : i) % 3); };
+    /* ---- A–Z ordering ---- */
+    let catSort = localStorage.getItem('dhCatSort') === 'custom' ? 'custom' : 'az';
+    const cmpText = (a, b) => String(a || '').localeCompare(String(b || ''), undefined, { sensitivity: 'base', numeric: true });
+    const displayCategories = () => catSort === 'az' ? categoriesList.slice().sort(cmpText) : categoriesList.slice();
+    const catIndex = cat => displayCategories().indexOf(cat);
+    const tintOf = cat => { const i = catIndex(cat); return 'tint-' + ((i < 0 ? 0 : i) % 3); };
+
+    /* ---- duplicate detection ---- */
+    const normName = n => String(n || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const normUrl = u => {
+      const t = String(u || '').trim(); if (!t) return '';
+      try { const x = new URL(/^https?:\/\//i.test(t) ? t : 'https://' + t); return (x.hostname.replace(/^www\./, '') + x.pathname.replace(/\/+$/, '')).toLowerCase(); }
+      catch (e) { return t.toLowerCase(); }
+    };
+    function findDuplicates(name, url, excludeId) {
+      const nk = normName(name), uk = normUrl(url), out = [];
+      allResources.forEach(r => {
+        if (excludeId && r.id === excludeId) return;
+        const byUrl = !!uk && normUrl(r.url) === uk, byName = !!nk && normName(r.name) === nk;
+        if (byUrl || byName) out.push({ r, byUrl, byName });
+      });
+      return out;
+    }
+    function dupLabel(d) {
+      const where = isLocked(d.r.category) ? 'a locked category' : d.r.category;
+      const what = isLocked(d.r.category) ? 'An existing resource' : `“${d.r.name}”`;
+      return `${what} in ${where} — ${d.byUrl ? 'same URL' : ''}${d.byUrl && d.byName ? ' &amp; ' : ''}${d.byName ? 'same name' : ''}`;
+    }
+
+    // promise-based dialog: showDup({title, html, buttons:[{label, value, cls}]}) -> value
+    let dupResolve = null;
+    function showDup(opts) {
+      return new Promise(resolve => {
+        dupResolve = resolve;
+        $('dupTitle').textContent = opts.title;
+        $('dupBody').innerHTML = opts.html;
+        $('dupActions').innerHTML = opts.buttons.map((b, i) => `<button class="btn ${b.cls || ''}" data-act="dupchoice" data-v="${i}">${escapeHtml(b.label)}</button>`).join('');
+        dupValues = opts.buttons.map(b => b.value);
+        $('dupModal').classList.add('show');
+      });
+    }
+    let dupValues = [];
+    function dupChoose(i) { $('dupModal').classList.remove('show'); const r = dupResolve; dupResolve = null; if (r) r(dupValues[i]); }
     const dotVar = i => ['var(--yellow)', 'var(--green)', 'var(--blue)'][i % 3];
     const isLocked = cat => !!categoryPins[cat] && !unlockedCategories.includes(cat);
 
@@ -944,17 +1006,18 @@
         chips.innerHTML = '';
         return;
       }
-      list.innerHTML = categoriesList.map((cat, i) => {
+      const dispCats = displayCategories();
+      list.innerHTML = dispCats.map((cat, i) => {
         const count = allResources.filter(r => r.category === cat).length;
         const lock = categoryPins[cat] ? (isLocked(cat) ? '🔒' : '🔓') : '';
-        return `<button class="nav-item cat-item ${currentView === cat ? 'active' : ''}" data-act="view" data-view="${escapeHtml(cat)}" data-index="${i}" draggable="true">
+        return `<button class="nav-item cat-item ${currentView === cat ? 'active' : ''}" data-act="view" data-view="${escapeHtml(cat)}" data-index="${i}" draggable="${catSort === 'custom'}">
           <span class="nav-content"><span class="dot" style="background:${dotVar(i)}"></span><span class="txt">${escapeHtml(cat)}</span><span style="font-size:12px">${lock}</span></span>
           <span class="nav-badge">${count}</span></button>`;
       }).join('');
 
       chips.innerHTML =
         `<button class="chip-btn ${currentView === 'all' ? 'active' : ''}" data-act="view" data-view="all">All</button>` +
-        categoriesList.map((cat, i) => {
+        dispCats.map((cat, i) => {
           const lock = categoryPins[cat] ? (isLocked(cat) ? '🔒' : '🔓') : '';
           return `<button class="chip-btn ${currentView === cat ? 'active' : ''}" data-act="view" data-view="${escapeHtml(cat)}"><span class="dot" style="background:${dotVar(i)}"></span>${escapeHtml(cat)} ${lock}</button>`;
         }).join('');
@@ -962,7 +1025,7 @@
 
     function populateCategorySelect() {
       const sel = $('fCategory'); const prev = sel.value;
-      sel.innerHTML = '<option value="">Select a category</option>' + categoriesList.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      sel.innerHTML = '<option value="">Select a category</option>' + displayCategories().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
       if (prev && categoriesList.includes(prev)) sel.value = prev;
     }
 
@@ -1008,6 +1071,7 @@
         else if (currentView !== 'all') matchesView = r.category === currentView;
         return matchesSearch && matchesView;
       });
+      filteredResources.sort((a, b) => cmpText(a.name, b.name));
       if (resetPage) currentPage = 1;
       const pages = Math.max(1, Math.ceil(filteredResources.length / PAGE_SIZE));
       if (currentPage > pages) currentPage = pages;
@@ -1105,11 +1169,11 @@
     let chartPts = [], chartData = [];
     function renderChart() {
       const wrap = $('chartWrap');
-      chartData = categoriesList.map(c => ({ name: c, n: allResources.filter(r => r.category === c).length }));
+      chartData = displayCategories().map(c => ({ name: c, n: allResources.filter(r => r.category === c).length }));
       if (!chartData.length) { wrap.classList.remove('line'); wrap.innerHTML = '<div class="empty-mini">Add a category to see your overview.</div>'; return; }
       if (chartData.length > 6) {   // many categories: readable ranked bars instead of a crowded line
         wrap.classList.remove('line');
-        const sorted = chartData.map(d => ({ name: d.name, n: d.n, idx: categoriesList.indexOf(d.name) })).sort((a, b) => b.n - a.n);
+        const sorted = chartData.map(d => ({ name: d.name, n: d.n, idx: catIndex(d.name) })).sort((a, b) => b.n - a.n);
         const topN = sorted.slice(0, 8), mx = Math.max(1, topN[0].n);
         wrap.innerHTML = '<div class="bars">' + topN.map(d => `<button class="bar-row" data-act="view" data-view="${escapeHtml(d.name)}"><span class="bar-name">${escapeHtml(d.name)}</span><span class="bar-track"><i style="width:${Math.max(3, d.n / mx * 100)}%;background:${dotVar(d.idx)}"></i></span><span class="bar-n">${d.n}</span></button>`).join('') + '</div>'
           + (sorted.length > 8 ? `<div class="bars-more">Top 8 of ${sorted.length} categories</div>` : '');
@@ -1160,6 +1224,7 @@
 
     /* ================= BULK IMPORT (unchanged logic) ================= */
     function initBulkImportListeners() {
+      ['fName', 'fUrl'].forEach(id => $(id).addEventListener('input', checkDupLive));
       ['bulkNames', 'bulkUrls', 'bulkTags'].forEach(id => {
         const el = $(id);
         el.addEventListener('input', updateBulkCounts);
@@ -1169,6 +1234,20 @@
     }
     function normalizeBulkLines(value) {
       return String(value || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map(v => v.trim()).filter(v => v !== '');
+    }
+    // returns [{i, why}] for every line that duplicates the library or an earlier line in the pasted list
+    function bulkDuplicates(names, urls) {
+      const out = [], seenN = new Set(), seenU = new Set();
+      names.forEach((n, i) => {
+        const nk = normName(n), uk = normUrl(urls[i]);
+        let why = '';
+        const lib = findDuplicates(n, urls[i], null);
+        if (lib.length) why = 'already in library' + (isLocked(lib[0].r.category) ? '' : ` (${lib[0].r.category})`);
+        else if ((nk && seenN.has(nk)) || (uk && seenU.has(uk))) why = 'repeated in this list';
+        if (why) out.push({ i, why });
+        if (nk) seenN.add(nk); if (uk) seenU.add(uk);
+      });
+      return out;
     }
     function updateBulkCounts() {
       const names = normalizeBulkLines($('bulkNames').value);
@@ -1181,12 +1260,14 @@
       if (!names.length && !urls.length && !tags.length) { preview.className = 'bulk-preview'; preview.textContent = 'Paste your data to see the line count.'; return; }
       if (names.length !== urls.length) { preview.className = 'bulk-preview error'; preview.textContent = `❌ Name: ${names.length} lines, URL: ${urls.length} lines — Name এবং URL-এর line count অবশ্যই একই হতে হবে।`; return; }
       if (tags.length && tags.length !== names.length) { preview.className = 'bulk-preview error'; preview.textContent = `❌ Name/URL: ${names.length} lines, Tag: ${tags.length} lines — Tag দিলে Tag-এর line count-ও একই হতে হবে।`; return; }
+      const dupsB = bulkDuplicates(names, urls);
+      if (dupsB.length) { preview.className = 'bulk-preview warn'; preview.textContent = `⚠️ ${dupsB.length}টি duplicate পাওয়া গেছে (মোট ${names.length}টির মধ্যে) — Save করার সময় আবার জানানো হবে।`; return; }
       preview.className = 'bulk-preview ok';
       preview.textContent = `✅ ${names.length}টি resource ready — Category: ${$('bulkCategory').value || 'Not selected'}`;
     }
     function populateBulkCategorySelect() {
       const sel = $('bulkCategory'); const prev = sel.value;
-      sel.innerHTML = '<option value="">Select a category</option>' + categoriesList.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      sel.innerHTML = '<option value="">Select a category</option>' + displayCategories().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
       if (prev && categoriesList.includes(prev)) sel.value = prev;
     }
     function openBulkModal() {
@@ -1211,7 +1292,21 @@
       if (names.length !== urls.length) return showToast('Name and URL line count must be the same.', true);
       if (tags.length && tags.length !== names.length) return showToast('Tag line count must match Name/URL line count.', true);
 
-      const resources = names.map((name, i) => ({ name, url: urls[i], category, description: '', tags: tags[i] || '', favorite: false }));
+      let resources = names.map((name, i) => ({ name, url: urls[i], category, description: '', tags: tags[i] || '', favorite: false }));
+      const dupsB = bulkDuplicates(names, urls);
+      if (dupsB.length) {
+        const fresh = resources.length - dupsB.length;
+        const buttons = [{ label: 'Cancel', value: 'cancel', cls: 'secondary' }];
+        if (fresh > 0) buttons.push({ label: `Skip duplicates (add ${fresh})`, value: 'skip', cls: 'green' });
+        buttons.push({ label: 'Add all anyway', value: 'all' });
+        const choice = await showDup({
+          title: `⚠️ ${dupsB.length} duplicate${dupsB.length > 1 ? 's' : ''} found`,
+          html: `Out of ${resources.length} lines:<ul class="dup-list">` + dupsB.slice(0, 8).map(d => `<li>${escapeHtml(names[d.i])} — ${d.why}</li>`).join('') + '</ul>' + (dupsB.length > 8 ? `<div>…and ${dupsB.length - 8} more</div>` : ''),
+          buttons
+        });
+        if (choice === 'cancel' || choice === undefined) return;
+        if (choice === 'skip') { const skip = new Set(dupsB.map(d => d.i)); resources = resources.filter((_, i) => !skip.has(i)); }
+      }
       const btn = $('bulkSaveBtn'); btn.disabled = true; btn.textContent = `Saving ${resources.length}...`;
       localStorage.setItem('designerBulkCategory', category);
       try {
@@ -1233,6 +1328,7 @@
       $('fId').value = ''; $('fName').value = ''; $('fUrl').value = '';
       $('fCategory').value = (categoriesList.includes(currentView) ? currentView : '');
       $('fDesc').value = ''; $('fTags').value = ''; $('fFav').checked = (currentView === 'favorites');
+      $('dupWarn').style.display = 'none';
       $('resourceModal').classList.add('show');
       setTimeout(() => $('fName').focus(), 120);
     }
@@ -1243,14 +1339,31 @@
       $('fId').value = r.id; $('fName').value = r.name; $('fUrl').value = r.url;
       $('fCategory').value = r.category; $('fDesc').value = r.description; $('fTags').value = r.tags;
       $('fFav').checked = r.favorite;
+      checkDupLive();
       $('resourceModal').classList.add('show');
     }
     function closeModal() { $('resourceModal').classList.remove('show'); }
+    function checkDupLive() {
+      const box = $('dupWarn'), name = $('fName').value, url = $('fUrl').value;
+      const dups = (name.trim() || url.trim()) ? findDuplicates(name, url, editingResource ? editingResource.id : null) : [];
+      if (!dups.length) { box.style.display = 'none'; return; }
+      box.innerHTML = '⚠️ <b>Duplicate:</b> ' + dups.slice(0, 2).map(dupLabel).join('<br>') + (dups.length > 2 ? `<br>…and ${dups.length - 2} more` : '');
+      box.style.display = '';
+    }
 
     async function saveResource() {
       const name = $('fName').value.trim(), url = $('fUrl').value.trim(), category = $('fCategory').value;
       if (!name || !url || !category) return showToast('Name, URL and Category are required.', true);
       const payload = { id: $('fId').value, name, url, category, description: $('fDesc').value.trim(), tags: $('fTags').value.trim(), favorite: $('fFav').checked };
+      const dups = findDuplicates(name, url, editingResource ? editingResource.id : null);
+      if (dups.length) {
+        const choice = await showDup({
+          title: '⚠️ Duplicate found',
+          html: 'This looks like a resource you already have:<ul class="dup-list">' + dups.slice(0, 4).map(d => `<li>${dupLabel(d)}</li>`).join('') + '</ul>' + (dups.length > 4 ? `<div>…and ${dups.length - 4} more</div>` : ''),
+          buttons: [{ label: 'Cancel', value: 'no', cls: 'secondary' }, { label: editingResource ? 'Save anyway' : 'Add anyway', value: 'yes' }]
+        });
+        if (choice !== 'yes') return;
+      }
       const btn = $('saveBtn'); btn.disabled = true; btn.textContent = 'Saving...';
       try {
         const r = await api(editingResource ? 'updateResource' : 'addResource', payload);
@@ -1340,14 +1453,16 @@
 
     function renderCatList() {
       const wrap = $('categoriesListWrap');
+      $('sortAz').classList.toggle('active', catSort === 'az'); $('sortCustom').classList.toggle('active', catSort === 'custom');
       if (categoriesList.length === 0) { wrap.textContent = 'No categories found.'; return; }
-      wrap.innerHTML = categoriesList.map((cat, i) => `
+      const list = displayCategories(), custom = catSort === 'custom';
+      wrap.innerHTML = list.map((cat, i) => `
         <div class="cat-row">
           <span class="nm"><span class="dot" style="background:${dotVar(i)}"></span>${escapeHtml(cat)} ${categoryPins[cat] ? '🔒' : ''}</span>
           <span class="ctl">
-            <button data-act="catUp" data-i="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button>
-            <button data-act="catDown" data-i="${i}" ${i === categoriesList.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button>
-            <button data-act="catDel" data-i="${i}" aria-label="Delete category">🗑️</button>
+            <button data-act="catUp" data-i="${i}" ${(!custom || i === 0) ? 'disabled' : ''} aria-label="Move up">▲</button>
+            <button data-act="catDown" data-i="${i}" ${(!custom || i === list.length - 1) ? 'disabled' : ''} aria-label="Move down">▼</button>
+            <button data-act="catDel" data-name="${escapeHtml(cat)}" aria-label="Delete category">🗑️</button>
           </span>
         </div>`).join('');
     }
@@ -1356,6 +1471,7 @@
       const name = $('newCategoryName').value.trim();
       const pin = $('newCategoryPin').value.trim();
       if (!name) return;
+      if (categoriesList.some(c => c.trim().toLowerCase() === name.toLowerCase())) return showToast(`Category “${name}” already exists.`, true);
       try {
         const r = await api('addCategory', name, pin);
         if (r.success) {
@@ -1375,6 +1491,7 @@
     }
 
     function moveCategory(from, to) {
+      if (catSort !== 'custom') { showToast('Switch to Custom order to rearrange categories.', true); return; }
       if (from === to || from < 0 || to < 0 || from >= categoriesList.length || to >= categoriesList.length) return;
       const [cat] = categoriesList.splice(from, 1);
       categoriesList.splice(to, 0, cat);
@@ -1511,6 +1628,7 @@
       const el = e.target.closest('[data-act]'); if (!el) return;
       const id = el.dataset.id;
       switch (el.dataset.act) {
+        case 'dupchoice': dupChoose(+el.dataset.v); break;
         case 'view': attemptShowView(el.dataset.view); break;
         case 'page': currentPage = +el.dataset.p; renderCards(); renderPager(); document.querySelector('.panel').scrollIntoView({ behavior: 'smooth', block: 'start' }); break;
         case 'vm': viewMode = el.dataset.mode === 'list' ? 'list' : 'grid'; renderCards(); break;
@@ -1521,7 +1639,8 @@
         case 'scrollLib': document.querySelector('.panel').scrollIntoView({ behavior: 'smooth' }); break;
         case 'catUp': moveCategory(+el.dataset.i, +el.dataset.i - 1); break;
         case 'catDown': moveCategory(+el.dataset.i, +el.dataset.i + 1); break;
-        case 'catDel': delCat(categoriesList[+el.dataset.i]); break;
+        case 'catDel': delCat(el.dataset.name); break;
+        case 'catsort': catSort = el.dataset.m === 'custom' ? 'custom' : 'az'; localStorage.setItem('dhCatSort', catSort); renderAll(); renderCatList(); break;
       }
     });
 
