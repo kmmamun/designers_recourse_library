@@ -1071,7 +1071,8 @@
         else if (currentView !== 'all') matchesView = r.category === currentView;
         return matchesSearch && matchesView;
       });
-      filteredResources.sort((a, b) => cmpText(a.name, b.name));
+      // favorites first, then everything else — each group A–Z
+      filteredResources.sort((a, b) => (b.favorite === true) - (a.favorite === true) || cmpText(a.name, b.name));
       if (resetPage) currentPage = 1;
       const pages = Math.max(1, Math.ceil(filteredResources.length / PAGE_SIZE));
       if (currentPage > pages) currentPage = pages;
